@@ -1,11 +1,18 @@
-import javax.swing.*;
+package src;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JButton;
+import javax.swing.JTextArea;
+import javax.swing.JFileChooser;
+import javax.swing.ImageIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 
 public class Main {
-    private static Graph graph;
+    private static src.Graph graph;
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("Graph Operations");

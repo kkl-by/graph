@@ -1,18 +1,27 @@
-import javax.swing.*;
-import java.io.File;
-import java.io.FileWriter;
+package src;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.HashSet;
+import java.security.SecureRandom;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
+import java.util.Collections;
 
 public class Graph {
     private Map<String, Map<String, Integer>> adjList;
-
-    public Map<String, Map<String, Integer>> getAdjacencyList() {
-        return adjList;
-    }
 
     public Graph() {
         this.adjList = new HashMap<>();
@@ -27,8 +36,9 @@ public class Graph {
     public static Graph loadGraphFromFile(File file) {
         Graph graph = new Graph();
         try {
-            String content = new String(Files.readAllBytes(file.toPath()));
-            String[] words = content.split("\\W+");
+            String content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+            String modifiedString = content.replaceAll("[^a-zA-Z0-9\s]", "");
+            String[] words = modifiedString.split("\\W+");
             for (int i = 0; i < words.length - 1; i++) {
                 graph.addEdge(words[i].toLowerCase(), words[i + 1].toLowerCase());
             }
@@ -44,12 +54,12 @@ public class Graph {
         StringBuilder dotFormat = new StringBuilder();
         dotFormat.append("digraph G {\n");
 
-        for (Map.Entry<String, Map<String, Integer>> entry : graph.getAdjacencyList().entrySet()) {
+        for (Map.Entry<String, Map<String, Integer>> entry : graph.adjList.entrySet()) {
             String from = entry.getKey();
             for (Map.Entry<String, Integer> edge : entry.getValue().entrySet()) {
                 String to = edge.getKey();
                 int weight = edge.getValue();
-                dotFormat.append(String.format("  \"%s\" -> \"%s\" [label=\"%d\"];\n", from, to, weight));
+                dotFormat.append(String.format("  \"%s\" -> \"%s\" [label=\"%d\"];%n", from, to, weight));
             }
         }
 
@@ -63,14 +73,25 @@ public class Graph {
         String dotFilePath = "src/image/graph.dot";
         String pngFilePath = "src/image/graph.png";
 
-        try (FileWriter fileWriter = new FileWriter(dotFilePath)) {
+        try (BufferedWriter fileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dotFilePath), StandardCharsets.UTF_8))) {
             fileWriter.write(dotFormat.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        // 使用 ProcessBuilder 构建命令和参数
+        ProcessBuilder processBuilder = new ProcessBuilder(dotPath, "-Tpng", dotFilePath, "-o", pngFilePath);
 
-        Runtime.getRuntime().exec(dotPath + " -Tpng " + dotFilePath + " -o " + pngFilePath).waitFor();
+        // 合并错误流到标准输出流
+        processBuilder.redirectErrorStream(true);
 
-        return pngFilePath;
-    }
+        // 启动进程
+        Process process = processBuilder.start();
+
+        // 等待进程完成
+        process.waitFor();
+
+        // 返回生成的 PNG 文件路径
+        return pngFilePath;    }
 
 
 
@@ -93,7 +114,7 @@ public class Graph {
     public String generateNewText(String inputText) {
         String[] words = inputText.split("\\s+");
         StringBuilder newText = new StringBuilder(words[0]);
-        Random rand = new Random();
+        SecureRandom rand = new SecureRandom();
         for (int i = 0; i < words.length - 1; i++) {
             String word1 = words[i];
             String word2 = words[i + 1];
@@ -155,7 +176,7 @@ public class Graph {
 
     public String randomWalk() {
         if (adjList.isEmpty()) return "The graph is empty!";
-        Random rand = new Random();
+        SecureRandom rand = new SecureRandom();
         List<String> nodes = new ArrayList<>(adjList.keySet());
         String current = nodes.get(rand.nextInt(nodes.size()));
         StringBuilder walk = new StringBuilder(current);
@@ -174,8 +195,5 @@ public class Graph {
         return walk.toString();
     }
 
-    public Map<String, Map<String, Integer>> getAdjList() {
-        return adjList;
-    }
 
 }
